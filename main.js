@@ -14,11 +14,11 @@ let mainWindow;
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({width: 800, height: 600});
-
+    const NODE_ENV = process.env.NODE_ENV;
     // and load the index.html of the app.
     mainWindow.loadURL(url.format({
-        pathname: path.join(__dirname, './static/index.html'),
-        protocol: 'file:',
+        pathname: NODE_ENV === 'production' ? path.join(__dirname, './static/index.html') : 'localhost:3000',
+        protocol: NODE_ENV === 'production' ? 'file:' : 'http:',
         slashes: true
     }));
 

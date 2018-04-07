@@ -1,5 +1,5 @@
 const electron = require('electron');
-const { createProgram }  = require('./api/program');
+const api = require('./api');
 // Module to control application life.
 const app = electron.app;
 // Module to create native browser window.
@@ -40,7 +40,7 @@ function createWindow() {
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
     createWindow();
-    createProgram();
+    api();
 
 });
 
@@ -58,7 +58,7 @@ app.on('activate', function () {
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) {
         createWindow();
-        createProgram();
+        api();
     }
 });
 

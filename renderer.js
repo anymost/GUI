@@ -6,3 +6,11 @@ const {ipcRenderer} = require('electron');
 exports.createProgram = () => {
     ipcRenderer.send('createProgram')
 };
+
+exports.detectError = () => {
+    return new Promise((resolve, reject) => {
+        ipcRenderer.on('error', message => {
+            reject(message);
+        })
+    })
+};

@@ -4,14 +4,17 @@
 const {ipcRenderer} = require('electron');
 
 exports.handleError = () => {
-    ipcRenderer.on('handleError', message => {
-
+    ipcRenderer.on('handleError', (event, message) => {
+        callback({
+            type: 'error',
+            content: message
+        })
     });
 };
 
-exports.handleMessage = () => {
-    ipcRenderer.on('handleMessage', message => {
-
+exports.handleMessage = (callback) => {
+    ipcRenderer.on('handleMessage', (event, message) => {
+        callback(message)
     });
 };
 
@@ -21,6 +24,14 @@ exports.createProgram = () => {
 
 exports.installDependencies = () => {
     ipcRenderer.send('installDependencies');
+};
+
+exports.runProgram = () => {
+    ipcRenderer.send('runProgram');
+};
+
+exports.buildProgram = () => {
+    ipcRenderer.send('buildProgram');
 };
 
 

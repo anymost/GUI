@@ -19,4 +19,8 @@ exports.createProgram = () => {
     ipcRenderer.send('createProgram');
 };
 
+exports.installDependencies = () => {
+    ipcRenderer.send('installDependencies');
+};
+
 

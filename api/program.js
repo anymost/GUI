@@ -1,12 +1,15 @@
 const {ipcMain, dialog} = require('electron');
-const gitClone = require('git-clone-or-pull');
-const childProcess = require('child_process');
+const git = require('nodegit');
 
 
 
-const createProgram = () => {
-    ipcMain.on('createProgram', () => {
-        new Promise((resolve, reject) => {
+async function createProgram() {
+    let event;
+    try {
+        event = await new Promise(resolve => {
+            ipcMain.on('createProgram',event => resolve(event));
+        });
+        const path = await new Promise((resolve, reject) => {
             dialog.showOpenDialog({
                 title: '请选择安装目录',
                 properties: ['openDirectory']
@@ -16,23 +19,17 @@ const createProgram = () => {
                 }
                 resolve(path[0])
             });
-        })
-        .then(path => {
-            gitClone('https://github.com/anymost/vue-auto-generate.git', path, err => {
-                console.log(err);
-                if (err) {
-                    return new Error(err);
-                }
-                ipcMain.send('createProgramDone');
-            });
-        })
-        .catch(err => {
-            console.log(err);
-            ipcMain.send('error', `err is ${err}`);
-        })
+        });
+        await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
+        event.sender.send('handleMessage', '项目下载完成');
+    } catch (error) {
+        console.log(error);
+        if (event) {
+            event.sender.send('handleError', `err is ${error}`);
+        }
+    }
+}
 
-    });
-};
 
 module.exports = function (){
     createProgram();

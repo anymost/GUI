@@ -3,14 +3,20 @@
 // All of the Node.js APIs are available in this process.
 const {ipcRenderer} = require('electron');
 
-exports.createProgram = () => {
-    ipcRenderer.send('createProgram')
+exports.handleError = () => {
+    ipcRenderer.on('handleError', message => {
+
+    });
 };
 
-exports.detectError = () => {
-    return new Promise((resolve, reject) => {
-        ipcRenderer.on('error', message => {
-            reject(message);
-        })
-    })
+exports.handleMessage = () => {
+    ipcRenderer.on('handleMessage', message => {
+
+    });
 };
+
+exports.createProgram = () => {
+    ipcRenderer.send('createProgram');
+};
+
+

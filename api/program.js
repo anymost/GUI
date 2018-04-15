@@ -1,8 +1,9 @@
 const {ipcMain, dialog} = require('electron');
 const git = require('nodegit');
 const childProcess = require('child_process');
+const Store = require('electron-store');
 const detectNNPM = require('../tools/detectNPM');
-let directoryPath = '';
+const store = new Store();
 
 async function createProgram() {
     let event;
@@ -22,7 +23,7 @@ async function createProgram() {
         });
 
         await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
-        directoryPath = path;
+        store.set('directoryPath' , path);
         event.sender.send('handleMessage', {type: 'success', content: '项目下载完成'});
     } catch (error) {
         console.log(error);
@@ -38,8 +39,9 @@ async function installDependencies() {
             ipcMain.on('installDependencies', event => resolve(event));
         });
         await detectNNPM();
+        const path = store.get('directoryPath');
         await new Promise((resolve, reject) => {
-            childProcess.exec(`cd ${directoryPath} && npm i`, error => {
+            childProcess.exec(`cd ${path} && npm i`, error => {
                 error && reject(error);
                 resolve();
             });
@@ -58,8 +60,9 @@ async function runProgram() {
             ipcMain.on('runProgram', event => resolve(event));
         });
         await detectNNPM();
+        const path = store.get('directoryPath');
         await new Promise((resolve, reject) => {
-            childProcess.exec(`cd ${directoryPath} && npm run serve`, error => {
+            childProcess.exec(`cd ${path} && npm run serve`, error => {
                 error && reject(error);
                 resolve();
             });
@@ -78,8 +81,9 @@ async function buildProgram() {
             ipcMain.on('runProgram', event => resolve(event));
         });
         await detectNNPM();
+        const path = store.get('directoryPath');
         await new Promise((resolve, reject) => {
-            childProcess.exec(`cd ${directoryPath} && npm run build`, error => {
+            childProcess.exec(`cd ${path} && npm run build`, error => {
                 error && reject(error);
                 resolve();
             });

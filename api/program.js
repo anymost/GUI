@@ -3,10 +3,13 @@ const git = require('nodegit');
 const childProcess = require('child_process');
 const Store = require('electron-store');
 const detectNNPM = require('../tools/detectNPM');
+const constant = require('../constant');
 const store = new Store();
 
-async function createProgram() {
-    ipcMain.on('createProgram', async event => {
+
+
+function programCreate() {
+    ipcMain.on(constant.PROGRAM_CREATE, async event => {
         try {
             const path = await new Promise((resolve, reject) => {
                 dialog.showOpenDialog({
@@ -17,82 +20,123 @@ async function createProgram() {
                     resolve(path[0]);
                 });
             });
-            event.sender.send('handleMessage', {type: 'info', content: '项目下载中，请稍等'});
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目下载中，请稍等'});
             await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
             store.set('directoryPath', path);
-            event.sender.send('handleMessage', {type: 'success', content: '项目下载完成'});
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目下载完成'});
         } catch (error) {
             console.log(error);
-            event && event.sender.send('handleError', error);
+            event && event.sender.send(constant.HANDLE_ERROR, error);
         }
     });
 }
 
 
-async function installDependencies() {
-    ipcMain.on('installDependencies', async event => {
+function programInstall() {
+    let installInstance = null;
+    ipcMain.on(constant.PROGRAM_INSTALL__START, async event => {
         try {
             await detectNNPM();
             const path = store.get('directoryPath');
-            event.sender.send('handleMessage', {type: 'info', content: '依赖安装中，请稍等'});
+            event.sender.send(constant.PROGRAM_INSTALL__STATUS, 'running');
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '依赖安装中，请稍等'});
             await new Promise((resolve, reject) => {
-                childProcess.exec(`cd ${path} && npm i --registry=https://registry.npm.taobao.org`, error => {
+                // TODO 自定义安装镜像
+                installInstance = childProcess.exec('npm i --registry=https://registry.npm.taobao.org', {cwd: path}, error => {
                     error && reject(error);
                     resolve();
                 });
             });
-            event.sender.send('handleMessage', {type: 'success', content: '依赖安装完成'});
+            event.sender.send(constant.PROGRAM_INSTALL__STATUS, 'stopped');
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '依赖安装完成'});
+            installInstance = null;
         } catch (error) {
             console.log(error);
-            event && event.sender.send('handleError', error);
+            event && event.sender.send(constant.HANDLE_ERROR, error);
+        }
+    });
+    // 项目停止运行
+    ipcMain.on(constant.PROGRAM_INSTALL__STOP, (event) => {
+        if (installInstance) {
+            installInstance.kill();
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '依赖已停止安装'});
+            event.sender.send(constant.PROGRAM_INSTALL__STATUS, 'stopped');
+            installInstance = null;
+        } else {
+            event.sender.send(constant.HANDLE_ERROR, '未检测到项目进程');
         }
     });
 };
 
-async function runProgram() {
-    ipcMain.on('runProgram', async event => {
+function programRun() {
+    let runInstance = null;
+    // 项目开始运行
+    ipcMain.on(constant.PROGRAM_RUN__START, async event => {
         try {
             await detectNNPM();
             const path = store.get('directoryPath');
-            event.sender.send('handleMessage', {type: 'info', content: '项目正在启动，请稍等'});
-            await new Promise((resolve, reject) => {
-                childProcess.exec(`cd ${path} && npm run serve`, error => {
-                    error && reject(error);
-                    resolve();
-                });
-            });
-            event.sender.send('handleMessage', {type: 'success', content: '项目已开始运行'});
+            runInstance = childProcess.exec('npm run serve', { cwd: path});
+            event.sender.send(constant.PROGRAM_RUN__STATUS, 'running');
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目即将开始运行，请稍等'});
         } catch (error) {
             console.log(error);
-            event && event.sender.send('handleError', error);
+            event && event.sender.send(constant.HANDLE_ERROR, error);
+        }
+    });
+    // 项目停止运行
+    ipcMain.on(constant.PROGRAM_RUN__STOP, (event) => {
+        if (runInstance) {
+            runInstance.kill();
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目已停止运行'});
+            event.sender.send(constant.PROGRAM_RUN__STATUS, 'stopped');
+            runInstance = null;
+        } else {
+            event.sender.send(constant.HANDLE_ERROR, '未检测到项目进程');
         }
     });
 }
 
-async function buildProgram() {
-    ipcMain.on('buildProgram', async event => {
+
+function programBuild() {
+    let buildInstance = null;
+    // 项目开始编译
+    ipcMain.on(constant.PROGRAM_BUILD__START, async event => {
         try {
             await detectNNPM();
             const path = store.get('directoryPath');
-            event.sender.send('handleMessage', {type: 'info', content: '项目开始编译，请稍等'});
+            event.sender.send(constant.PROGRAM_BUILD__STATUS, 'running');
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目开始编译，请稍等'});
             await new Promise((resolve, reject) => {
-                childProcess.exec(`cd ${path} && npm run build`, error => {
+                buildInstance = childProcess.exec(`cd ${path} && npm run build`, error => {
                     error && reject(error);
                     resolve();
                 });
             });
-            event.sender.send('handleMessage', {type: 'success', content: '项目已编译完成'});
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目已编译完成'});
+            event.sender.send(constant.PROGRAM_BUILD__STATUS, 'stopped');
+            buildInstance = null;
         } catch (error) {
             console.log(error);
-            event && event.sender.send('handleError', error);
+            event && event.sender.send(constant.HANDLE_ERROR, error);
+        }
+    });
+    // 项目停止编译
+    ipcMain.on(constant.PROGRAM_BUILD__STOP, (event) => {
+        if (buildInstance) {
+            buildInstance.kill();
+            event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目已停止编译'});
+            event.sender.send(constant.PROGRAM_BUILD__STATUS, 'stopped');
+            runInstance = null;
+        } else {
+            event.sender.send(constant.HANDLE_ERROR, '未检测到项目进程');
         }
     });
 }
 
 
 module.exports = function () {
-    createProgram();
-    installDependencies();
-    runProgram();
-    buildProgram();
+    programCreate();
+    programInstall();
+    programRun();
+    programBuild();
 };

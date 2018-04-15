@@ -8,7 +8,7 @@ module.exports = function() {
             if (/not found/i.test(message)) {
                 reject('未检测到npm，请安装');
             }
-            resolve();
+            resolve('NPM installed');
         })
     });
 };

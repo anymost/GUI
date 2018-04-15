@@ -6,93 +6,87 @@ const detectNNPM = require('../tools/detectNPM');
 const store = new Store();
 
 async function createProgram() {
-    let event;
-    try {
-        event = await new Promise(resolve => {
-            ipcMain.on('createProgram', event => resolve(event));
-        });
-
-        const path = await new Promise((resolve, reject) => {
-            dialog.showOpenDialog({
-                title: '请选择安装目录',
-                properties: ['openDirectory']
-            }, path => {
-                !path && reject('已取消安装项目');
-                resolve(path[0]);
+    ipcMain.on('createProgram', async event => {
+        try {
+            const path = await new Promise((resolve, reject) => {
+                dialog.showOpenDialog({
+                    title: '请选择安装目录',
+                    properties: ['openDirectory']
+                }, path => {
+                    !path && reject('已取消安装项目');
+                    resolve(path[0]);
+                });
             });
-        });
-
-        await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
-        store.set('directoryPath' , path);
-        event.sender.send('handleMessage', {type: 'success', content: '项目下载完成'});
-    } catch (error) {
-        console.log(error);
-        event && event.sender.send('handleError', `error is ${error}`);
-    }
+            event.sender.send('handleMessage', {type: 'info', content: '项目下载中，请稍等'});
+            await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
+            store.set('directoryPath', path);
+            event.sender.send('handleMessage', {type: 'success', content: '项目下载完成'});
+        } catch (error) {
+            console.log(error);
+            event && event.sender.send('handleError', error);
+        }
+    });
 }
 
 
 async function installDependencies() {
-    let event;
-    try {
-        event = await new Promise(resolve => {
-            ipcMain.on('installDependencies', event => resolve(event));
-        });
-        await detectNNPM();
-        const path = store.get('directoryPath');
-        await new Promise((resolve, reject) => {
-            childProcess.exec(`cd ${path} && npm i`, error => {
-                error && reject(error);
-                resolve();
+    ipcMain.on('installDependencies', async event => {
+        try {
+            await detectNNPM();
+            const path = store.get('directoryPath');
+            event.sender.send('handleMessage', {type: 'info', content: '依赖安装中，请稍等'});
+            await new Promise((resolve, reject) => {
+                childProcess.exec(`cd ${path} && npm i --registry=https://registry.npm.taobao.org`, error => {
+                    error && reject(error);
+                    resolve();
+                });
             });
-        });
-        event.sender.send('handleMessage', {type: 'success', content: '依赖安装完成'});
-    } catch (error) {
-        console.log(error);
-        event && event.sender.send('handleError', `error is ${error}`);
-    }
-}
+            event.sender.send('handleMessage', {type: 'success', content: '依赖安装完成'});
+        } catch (error) {
+            console.log(error);
+            event && event.sender.send('handleError', error);
+        }
+    });
+};
 
 async function runProgram() {
-    let event;
-    try {
-        event = await new Promise(resolve => {
-            ipcMain.on('runProgram', event => resolve(event));
-        });
-        await detectNNPM();
-        const path = store.get('directoryPath');
-        await new Promise((resolve, reject) => {
-            childProcess.exec(`cd ${path} && npm run serve`, error => {
-                error && reject(error);
-                resolve();
+    ipcMain.on('runProgram', async event => {
+        try {
+            await detectNNPM();
+            const path = store.get('directoryPath');
+            event.sender.send('handleMessage', {type: 'info', content: '项目正在启动，请稍等'});
+            await new Promise((resolve, reject) => {
+                childProcess.exec(`cd ${path} && npm run serve`, error => {
+                    error && reject(error);
+                    resolve();
+                });
             });
-        });
-        event.sender.send('handleMessage', {type: 'success', content: '项目已开始运行'});
-    } catch (error) {
-        console.log(error);
-        event && event.sender.send('handleError', `error is ${error}`);
-    }
+            event.sender.send('handleMessage', {type: 'success', content: '项目已开始运行'});
+        } catch (error) {
+            console.log(error);
+            event && event.sender.send('handleError', error);
+        }
+    });
 }
 
 async function buildProgram() {
-    let event;
-    try {
-        event = await new Promise(resolve => {
-            ipcMain.on('runProgram', event => resolve(event));
-        });
-        await detectNNPM();
-        const path = store.get('directoryPath');
-        await new Promise((resolve, reject) => {
-            childProcess.exec(`cd ${path} && npm run build`, error => {
-                error && reject(error);
-                resolve();
+    ipcMain.on('buildProgram', async event => {
+        try {
+            await detectNNPM();
+            const path = store.get('directoryPath');
+            event.sender.send('handleMessage', {type: 'info', content: '项目开始编译，请稍等'});
+            await new Promise((resolve, reject) => {
+                childProcess.exec(`cd ${path} && npm run build`, error => {
+                    error && reject(error);
+                    resolve();
+                });
             });
-        });
-        event.sender.send('handleMessage', {type: 'success', content: '项目已编译完成'});
-    } catch (error) {
-        console.log(error);
-        event && event.sender.send('handleError', `error is ${error}`);
-    }
+            event.sender.send('handleMessage', {type: 'success', content: '项目已编译完成'});
+        } catch (error) {
+            console.log(error);
+            event && event.sender.send('handleError', error);
+        }
+    });
 }
 
 

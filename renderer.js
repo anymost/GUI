@@ -3,7 +3,7 @@
 // All of the Node.js APIs are available in this process.
 const {ipcRenderer} = require('electron');
 
-exports.handleError = () => {
+exports.handleError = (callback) => {
     ipcRenderer.on('handleError', (event, message) => {
         callback({
             type: 'error',

@@ -51,6 +51,9 @@ function programInstall() {
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '依赖安装完成'});
             installInstance = null;
         } catch (error) {
+            if(error.killed){
+                return;
+            }
             console.log(error);
             event && event.sender.send(constant.HANDLE_ERROR, error);
         }

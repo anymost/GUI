@@ -1,4 +1,5 @@
 const program = require('./program');
+const directory = require('./directory');
 
 
 
@@ -6,5 +7,6 @@ const program = require('./program');
 
 module.exports = function() {
     program();
+    directory();
 };
 

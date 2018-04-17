@@ -9,20 +9,13 @@ const store = new Store();
 
 
 function programCreate() {
-    ipcMain.on(constant.PROGRAM_CREATE, async event => {
+    ipcMain.on(constant.PROGRAM_CREATE, async (event, info) => {
         try {
-            const path = await new Promise((resolve, reject) => {
-                dialog.showOpenDialog({
-                    title: '请选择安装目录',
-                    properties: ['openDirectory']
-                }, path => {
-                    !path && reject('已取消安装项目');
-                    resolve(path[0]);
-                });
-            });
+            const { name, path } = info;
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目下载中，请稍等'});
             await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
-            store.set('directoryPath', path);
+            store.set('currentName', name);
+            store.set('currentPath', path);
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目下载完成'});
         } catch (error) {
             console.log(error);
@@ -37,7 +30,7 @@ function programInstall() {
     ipcMain.on(constant.PROGRAM_INSTALL__START, async event => {
         try {
             await detectNNPM();
-            const path = store.get('directoryPath');
+            const path = store.get('currentPath');
             event.sender.send(constant.PROGRAM_INSTALL__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '依赖安装中，请稍等'});
             await new Promise((resolve, reject) => {
@@ -77,7 +70,7 @@ function programRun() {
     ipcMain.on(constant.PROGRAM_RUN__START, async event => {
         try {
             await detectNNPM();
-            const path = store.get('directoryPath');
+            const path = store.get('currentPath');
             runInstance = childProcess.exec('npm run serve', { cwd: path});
             event.sender.send(constant.PROGRAM_RUN__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目即将开始运行，请稍等'});
@@ -106,7 +99,7 @@ function programBuild() {
     ipcMain.on(constant.PROGRAM_BUILD__START, async event => {
         try {
             await detectNNPM();
-            const path = store.get('directoryPath');
+            const path = store.get('currentPath');
             event.sender.send(constant.PROGRAM_BUILD__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目开始编译，请稍等'});
             await new Promise((resolve, reject) => {
@@ -129,7 +122,7 @@ function programBuild() {
             buildInstance.kill();
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目已停止编译'});
             event.sender.send(constant.PROGRAM_BUILD__STATUS, 'stopped');
-            runInstance = null;
+            buildInstance = null;
         } else {
             event.sender.send(constant.HANDLE_ERROR, '未检测到项目进程');
         }

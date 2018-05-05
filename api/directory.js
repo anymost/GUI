@@ -14,6 +14,7 @@ function directorySelect() {
                 });
             });
             event.sender.send(constant.DIRECTORY_SELECT__DONE, path);
+            event.sender.send(constant.HANDLE_MESSAGE, { type: 'success', content: '已选择目录' });
         } catch (error) {
             console.log(error);
             event && event.sender.send(constant.HANDLE_ERROR, error);

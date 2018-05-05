@@ -2,12 +2,10 @@ const Store = require('electron-store');
 
 const store = new Store();
 
-const setCurrentProgram = ({ path, name }) => {
+exports.setCurrentProgram = ({ path, name }) => {
     store.set('currentPath', path);
     store.set('currentName', name);
 };
-
-exports.setCurrentProgram = setCurrentProgram;
 
 exports.getCurrentProgram = () => {
     return {
@@ -17,7 +15,6 @@ exports.getCurrentProgram = () => {
 };
 
 exports.appendHistoryProgram = (info) => {
-    setCurrentProgram(info);
     let historyPrograms = store.get('historyPrograms');
     if (historyPrograms) {
         historyPrograms = JSON.parse(historyPrograms);
@@ -36,7 +33,9 @@ exports.getHistoryPrograms = () => {
     return [];
 };
 
-exports.removeHistoryPrograms = () => {
-
+exports.removeHistoryPrograms = (name) => {
+    let historyPrograms = JSON.stringify(store.get('historyPrograms'));
+    historyPrograms = historyPrograms.filter(program => program.name !== name);
+    store.set('historyPrograms', JSON.stringify(historyPrograms));
 };
 

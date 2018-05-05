@@ -22,8 +22,8 @@ exports.ProgramBuild = program.ProgramBuild;
 exports.ProgramBuildStatus = program.ProgramBuildStatus;
 
 
-exports.directorySelectStart = directory.DirectorySelectStart;
+exports.DirectorySelectStart = directory.DirectorySelectStart;
 
-exports.directorySelectDone = directory.DirectorySelectDone;
+exports.DirectorySelectDone = directory.DirectorySelectDone;
 
 

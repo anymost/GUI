@@ -4,6 +4,7 @@ const childProcess = require('child_process');
 const Store = require('electron-store');
 const detectNNPM = require('../tools/detectNPM');
 const constant = require('../constant');
+const { appendHistoryProgram, setCurrentProgram} = require('../tools/persistData');
 const store = new Store();
 
 
@@ -11,11 +12,11 @@ const store = new Store();
 function programCreate() {
     ipcMain.on(constant.PROGRAM_CREATE, async (event, info) => {
         try {
-            const { name, path } = info;
+            const { path } = info;
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目下载中，请稍等'});
             await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
-            store.set('currentName', name);
-            store.set('currentPath', path);
+            setCurrentProgram(info);
+            appendHistoryProgram(info);
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目下载完成'});
         } catch (error) {
             console.log(error);

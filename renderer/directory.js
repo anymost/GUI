@@ -6,7 +6,7 @@ exports.DirectorySelectStart = () => {
 };
 
 exports.DirectorySelectDone = (callback) => {
-    ipcRenderer.on(constant.DIRECTORY_SELECT__DONE, (event, message) => {
-        callback(message);
+    ipcRenderer.on(constant.DIRECTORY_SELECT__DONE, (event, path) => {
+        callback(path);
     })
 };

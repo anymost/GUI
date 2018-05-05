@@ -9,8 +9,8 @@ exports.setCurrentProgram = ({ path, name }) => {
 
 exports.getCurrentProgram = () => {
     return {
-        path: store.get('currentPath'),
-        name: store.get('currentName')
+        path: store.get('currentPath') || '',
+        name: store.get('currentName') || ''
     };
 };
 

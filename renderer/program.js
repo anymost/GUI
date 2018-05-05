@@ -6,6 +6,16 @@ exports.ProgramCreate = (info) => {
     ipcRenderer.send(constant.PROGRAM_CREATE, info);
 };
 
+exports.ProgramInfo = (callback, cancel) => {
+    if (!cancel) {
+        ipcRenderer.on(constant.PROGRAM_INFO, (event, info) => {
+            callback(info);
+        });
+    } else {
+        ipcRenderer.removeAllListeners(constant.PROGRAM_INFO);
+    }
+};
+
 exports.ProgramInstall = (action) => {
     action === 'start'?
         ipcRenderer.send(constant.PROGRAM_INSTALL__START):

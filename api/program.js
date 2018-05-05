@@ -1,11 +1,9 @@
-const {ipcMain, dialog} = require('electron');
+const { ipcMain } = require('electron');
 const git = require('nodegit');
 const childProcess = require('child_process');
-const Store = require('electron-store');
 const detectNNPM = require('../tools/detectNPM');
 const constant = require('../constant');
-const { appendHistoryProgram, setCurrentProgram} = require('../tools/persistData');
-const store = new Store();
+const { appendHistoryProgram, setCurrentProgram, getCurrentProgram, getHistoryPrograms} = require('../tools/persistData');
 
 
 
@@ -18,6 +16,10 @@ function programCreate() {
             setCurrentProgram(info);
             appendHistoryProgram(info);
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目下载完成'});
+            event.sender.send(constant.PROGRAM_INFO, {
+                current: getCurrentProgram(),
+                list: getHistoryPrograms()
+            });
         } catch (error) {
             console.log(error);
             event && event.sender.send(constant.HANDLE_ERROR, error);
@@ -31,7 +33,10 @@ function programInstall() {
     ipcMain.on(constant.PROGRAM_INSTALL__START, async event => {
         try {
             await detectNNPM();
-            const path = store.get('currentPath');
+            const  { path } = getCurrentProgram();
+            if (!path) {
+                throw new Error('当前安装目录不存在');
+            }
             event.sender.send(constant.PROGRAM_INSTALL__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '依赖安装中，请稍等'});
             await new Promise((resolve, reject) => {
@@ -63,7 +68,7 @@ function programInstall() {
             event.sender.send(constant.HANDLE_ERROR, '未检测到项目进程');
         }
     });
-};
+}
 
 function programRun() {
     let runInstance = null;
@@ -71,7 +76,10 @@ function programRun() {
     ipcMain.on(constant.PROGRAM_RUN__START, async event => {
         try {
             await detectNNPM();
-            const path = store.get('currentPath');
+            const  { path } = getCurrentProgram();
+            if (!path) {
+                throw new Error('当前安装目录不存在');
+            }
             runInstance = childProcess.exec('npm run serve', { cwd: path});
             event.sender.send(constant.PROGRAM_RUN__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目即将开始运行，请稍等'});
@@ -100,7 +108,10 @@ function programBuild() {
     ipcMain.on(constant.PROGRAM_BUILD__START, async event => {
         try {
             await detectNNPM();
-            const path = store.get('currentPath');
+            const  { path } = getCurrentProgram();
+            if (!path) {
+                throw new Error('当前安装目录不存在');
+            }
             event.sender.send(constant.PROGRAM_BUILD__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目开始编译，请稍等'});
             await new Promise((resolve, reject) => {

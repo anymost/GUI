@@ -14,7 +14,7 @@ let mainWindow;
 
 function createWindow() {
     // Create the browser window.
-    mainWindow = new BrowserWindow({width: 800, height: 600});
+    mainWindow = new BrowserWindow({width: 900, height: 600});
     const NODE_ENV = process.env.NODE_ENV;
     // and load the index.html of the app.
     mainWindow.loadURL(url.format({

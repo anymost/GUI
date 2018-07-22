@@ -1,6 +1,7 @@
 const common = require('./renderer/common');
 const program = require('./renderer/program');
 const directory = require('./renderer/directory');
+const page = require('./renderer/page');
 
 exports.HandleError = common.HandleError;
 
@@ -38,5 +39,13 @@ exports.CurrentProgramSetDone = directory.CurrentProgramSetDone;
 exports.ProgramListFetchStart = directory.ProgramListFetchStart;
 
 exports.ProgramListFetchDone = directory.ProgramListFetchDone;
+
+exports.PageCreate = page.PageCreate;
+
+exports.ComponentCreate = page.ComponentCreate;
+
+exports.VuexStoreCreate = page.VuexStoreCreate;
+
+exports.FineStoreCreate = page.FineStoreCreate;
 
 

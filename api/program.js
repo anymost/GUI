@@ -1,10 +1,8 @@
 const { ipcMain } = require('electron');
-const git = require('nodegit');
 const childProcess = require('child_process');
 const detectNNPM = require('../tools/detectNPM');
 const constant = require('../constant');
 const { appendHistoryProgram, setCurrentProgram, getCurrentProgram, getHistoryPrograms} = require('../tools/persistData');
-
 
 
 function programCreate() {
@@ -12,9 +10,17 @@ function programCreate() {
         try {
             const { path } = info;
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目下载中，请稍等'});
-            await git.Clone('https://github.com/anymost/vue-auto-generate.git', path);
-            setCurrentProgram(info);
-            appendHistoryProgram(info);
+            await new Promise(((resolve, reject) => {
+                childProcess.exec('git clone ssh://git@git.sankuai.com/bfe/fine-template.git', { cwd: path }, err => {
+                    if (err) {
+                        reject(err)
+                    }
+                    resolve();
+                })
+            }));
+            const finalInfo = {name: info.name, path: info.path + '/fine-template'};
+            setCurrentProgram(finalInfo);
+            appendHistoryProgram(finalInfo);
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目下载完成'});
             event.sender.send(constant.PROGRAM_INFO, {
                 current: getCurrentProgram(),
@@ -80,18 +86,21 @@ function programRun() {
             if (!path) {
                 throw new Error('当前安装目录不存在');
             }
-            runInstance = childProcess.exec('npm run serve', { cwd: path});
+            runInstance = childProcess.spawn('npm', ['run', 'start'], { cwd: path });
             event.sender.send(constant.PROGRAM_RUN__STATUS, 'running');
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'success', content: '项目即将开始运行，请稍等'});
         } catch (error) {
-            console.log(error);
             event && event.sender.send(constant.HANDLE_ERROR, error);
         }
     });
     // 项目停止运行
     ipcMain.on(constant.PROGRAM_RUN__STOP, (event) => {
         if (runInstance) {
-            runInstance.kill();
+            try {
+                runInstance.kill();
+            } catch (e) {
+                console.log(e);
+            }
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目已停止运行'});
             event.sender.send(constant.PROGRAM_RUN__STATUS, 'stopped');
             runInstance = null;
@@ -124,7 +133,6 @@ function programBuild() {
             event.sender.send(constant.PROGRAM_BUILD__STATUS, 'stopped');
             buildInstance = null;
         } catch (error) {
-            console.log(error);
             event && event.sender.send(constant.HANDLE_ERROR, error);
         }
     });

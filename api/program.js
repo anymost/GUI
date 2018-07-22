@@ -11,12 +11,7 @@ function programCreate() {
             const { path } = info;
             event.sender.send(constant.HANDLE_MESSAGE, {type: 'info', content: '项目下载中，请稍等'});
             await new Promise(((resolve, reject) => {
-                // childProcess.exec('git clone ssh://git@git.sankuai.com/bfe/fine-template.git', { cwd: path }, err => {
-                //     if (err) {
-                //         reject(err)
-                //     }
-                //     resolve();
-                // })
+                
             }));
             const finalInfo = {name: info.name, path: info.path + '/fine-template'};
             setCurrentProgram(finalInfo);
